@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生费用查询系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a73e8, #1557b0);
+    color: #fff;
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .header .badge {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .toolbar {
+    background: #fff;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #e8e8e8;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border: 2px solid #d9d9d9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    outline: none;
+  }
+  .search-box input:focus {
+    border-color: #1a73e8;
+  }
+  .search-box .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+  }
+  .filter-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #555;
+  }
+  .filter-btn:hover {
+    border-color: #1a73e8;
+    color: #1a73e8;
+  }
+  .filter-btn.active {
+    background: #e53935;
+    color: #fff;
+    border-color: #e53935;
+  }
+  .filter-btn.active:hover {
+    background: #c62828;
+    border-color: #c62828;
+  }
+  .filter-select {
+    min-width: 160px;
+    padding: 10px 12px;
+    border: 2px solid #d9d9d9;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+  }
+  .filter-select:focus {
+    border-color: #1a73e8;
+  }
+  .filter-select option {
+    padding: 4px;
+  }
+  .tab-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #555;
+  }
+  .tab-btn:hover {
+    border-color: #1a73e8;
+    color: #1a73e8;
+  }
+  .tab-btn.active {
+    background: #1a73e8;
+    color: #fff;
+    border-color: #1a73e8;
+  }
+  .stats-bar {
+    background: #fff;
+    padding: 12px 24px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-item .num {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .stat-item .num.red { color: #e53935; }
+  .stat-item .num.blue { color: #1a73e8; }
+  .stat-item .num.green { color: #43a047; }
+  .content {
+    padding: 16px 24px;
+  }
+  .table-container {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead {
+    background: #fafafa;
+  }
+  th {
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #e8e8e8;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  td {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+  }
+  tr:hover td {
+    background: #f5f7ff;
+  }
+  .money { font-family: "SF Mono", "Menlo", monospace; }
+  .arrear-zero { color: #43a047; }
+  .arrear-positive { color: #e53935; font-weight: 700; }
+  .arrear-negative { color: #1a73e8; }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .status-active { background: #e8f5e9; color: #2e7d32; }
+  .status-graduated { background: #e3f2fd; color: #1565c0; }
+  .xh-temp { color: #e53935; font-weight: 600; }
+  .student-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .student-card .name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .student-card .name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .student-card .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+  }
+  .student-card .info-item { display: flex; gap: 4px; }
+  .student-card .info-label { color: #999; }
+  .student-card .summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+  }
+  .student-card .summary-item {
+    text-align: center;
+  }
+  .student-card .summary-label {
+    font-size: 12px;
+    color: #999;
+  }
+  .student-card .summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: "SF Mono", "Menlo", monospace;
+  }
+  .empty-msg {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 14px;
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0;
+    flex-wrap: wrap;
+  }
+  .pagination button {
+    padding: 6px 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .pagination button:hover:not(:disabled) {
+    border-color: #1a73e8;
+    color: #1a73e8;
+  }
+  .pagination button.active {
+    background: #1a73e8;
+    color: #fff;
+    border-color: #1a73e8;
+  }
+  .pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .pagination .page-info {
+    font-size: 13px;
+    color: #666;
+    margin: 0 8px;
+  }
+  .footer {
+    text-align: center;
+    padding: 16px;
+    color: #999;
+    font-size: 12px;
+  }
+  @media (max-width: 768px) {
+    .toolbar { flex-direction: column; }
+    .search-box { max-width: 100%; }
+    th, td { padding: 8px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>学生费用查询系统</h1>
+  <span class="badge">只读查询 &middot; 安全模式</span>
+</div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <span class="icon">&#128269;</span>
+    <input type="text" id="searchInput" placeholder="输入学号或姓名搜索..." autocomplete="off">
+  </div>
+  <select class="filter-select" id="collegeFilter">
+    <option value="">全部学院</option>
+  </select>
+  <select class="filter-select" id="counselorFilter">
+    <option value="">全部辅导员</option>
+  </select>
+  <select class="filter-select" id="gradeFilter">
+    <option value="">全部年级</option>
+  </select>
+  <select class="filter-select" id="classFilter">
+    <option value="">全部班级</option>
+  </select>
+  <select class="filter-select" id="yearFilter">
+    <option value="">全部年度</option>
+  </select>
+  <select class="filter-select" id="feeItemFilter">
+    <option value="">全部项目</option>
+  </select>
+  <button class="tab-btn active" data-tab="detail" onclick="switchTab('detail')">费用明细</button>
+  <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">学生汇总</button>
+  <button class="filter-btn" id="arrearFilter" onclick="toggleArrearFilter()">只看欠费</button>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item"><span>学生总数：</span><span class="num blue" id="totalStudents">0</span></div>
+  <div class="stat-item"><span>费用记录：</span><span class="num blue" id="totalRecords">0</span></div>
+  <div class="stat-item"><span>欠费学生：</span><span class="num red" id="arrearStudents">0</span></div>
+  <div class="stat-item"><span>欠费总额：</span><span class="num red money" id="arrearTotal">&yen;0</span></div>
+</div>
+
+<div class="content" id="contentArea"></div>
+
+<div class="footer">
+  学生费用查询系统 &middot; 只读模式 &middot; 数据仅供查询使用
+</div>
+
+<!-- 数据文件：由 update_data.py 从 Excel 自动生成，更新数据时只需运行脚本 -->
+<script src="data_summary.js"></script>
+<script src="data_fees_part1.js"></script>
+<script src="data_fees_part2.js"></script>
+<script src="data_merge.js"></script>
+
+<script>
+
+// State
+let currentTab = 'detail';
+let arrearFilterOn = false;
+let searchKeyword = '';
+let selectedClass = '';
+let selectedYear = '';
+let selectedFeeItem = '';
+let selectedGrade = '';
+let selectedCollege = '';
+let selectedCounselor = '';
+let currentPage = 1;
+const PAGE_SIZE = 50;
+
+// Counselor class lookup map (pre-built for performance)
+const COUNSELOR_BY_CLASS = {};
+const CLASSES_BY_COUNSELOR = {};
+const COUNSELOR_BY_COLLEGE = {};
+(function buildCounselorMaps() {
+  for (const m of COUNSELOR_CLASS_MAP) {
+    COUNSELOR_BY_CLASS[m['班级名称']] = m['辅导员'];
+    if (!CLASSES_BY_COUNSELOR[m['辅导员']]) CLASSES_BY_COUNSELOR[m['辅导员']] = [];
+    CLASSES_BY_COUNSELOR[m['辅导员']].push(m['班级名称']);
+    if (!COUNSELOR_BY_COLLEGE[m['学院']]) COUNSELOR_BY_COLLEGE[m['学院']] = new Set();
+    COUNSELOR_BY_COLLEGE[m['学院']].add(m['辅导员']);
+  }
+})();
+
+// Get counselor name for a given class
+function getCounselor(className) {
+  return COUNSELOR_BY_CLASS[className] || '';
+}
+
+// Get classes for a given counselor
+function getCounselorClasses(counselor) {
+  return CLASSES_BY_COUNSELOR[counselor] || [];
+}
+
+// Extract grade (年级) from class name
+function extractGrade(className) {
+  const match = String(className).match(/^(\d+级)/);
+  return match ? match[1] : '';
+}
+
+// Get base filter set (filtered by college if selected)
+function getBaseStudents() {
+  let students = STUDENT_SUMMARY;
+  if (selectedCollege) {
+    students = students.filter(s => s['部门名称'] === selectedCollege);
+  }
+  return students;
+}
+
+// Populate counselor dropdown (filtered by selected college)
+function populateCounselorDropdown() {
+  const select = document.getElementById('counselorFilter');
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  let counselors;
+  if (selectedCollege && COUNSELOR_BY_COLLEGE[selectedCollege]) {
+    counselors = [...COUNSELOR_BY_COLLEGE[selectedCollege]].sort();
+  } else {
+    counselors = Object.keys(CLASSES_BY_COUNSELOR).sort();
+  }
+  counselors.forEach(counselor => {
+    const opt = document.createElement('option');
+    opt.value = counselor;
+    opt.textContent = counselor;
+    select.appendChild(opt);
+  });
+  if (selectedCounselor && !counselors.includes(selectedCounselor)) {
+    selectedCounselor = '';
+    select.value = '';
+  }
+}
+
+// Populate college dropdown
+function populateCollegeDropdown() {
+  const colleges = [...new Set(STUDENT_SUMMARY.map(s => s['部门名称']))].sort();
+  const select = document.getElementById('collegeFilter');
+  colleges.forEach(college => {
+    const opt = document.createElement('option');
+    opt.value = college;
+    opt.textContent = college;
+    select.appendChild(opt);
+  });
+}
+
+// Populate grade dropdown (filtered by selected college)
+function populateGradeDropdown() {
+  const select = document.getElementById('gradeFilter');
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  const students = getBaseStudents();
+  const grades = [...new Set(students.map(s => extractGrade(s['班级名称'])))].filter(g => g).sort((a, b) => parseInt(a) - parseInt(b));
+  grades.forEach(grade => {
+    const opt = document.createElement('option');
+    opt.value = grade;
+    opt.textContent = grade;
+    select.appendChild(opt);
+  });
+  if (selectedGrade && !grades.includes(selectedGrade)) {
+    selectedGrade = '';
+    select.value = '';
+  }
+}
+
+// Populate class dropdown (filtered by selected college + grade)
+function populateClassDropdown() {
+  const select = document.getElementById('classFilter');
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  let students = getBaseStudents();
+  if (selectedGrade) {
+    students = students.filter(s => extractGrade(s['班级名称']) === selectedGrade);
+  }
+  const classes = [...new Set(students.map(s => s['班级名称']))].sort();
+  classes.forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = cls;
+    select.appendChild(opt);
+  });
+  if (selectedClass && !classes.includes(selectedClass)) {
+    selectedClass = '';
+    select.value = '';
+  }
+}
+
+// Populate year dropdown from fee data
+function populateYearDropdown() {
+  const select = document.getElementById('yearFilter');
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  const years = [...new Set(ENRICHED_FEES.map(f => f['收费期间名称']))].filter(y => y).sort();
+  years.forEach(year => {
+    const opt = document.createElement('option');
+    opt.value = year;
+    opt.textContent = year;
+    select.appendChild(opt);
+  });
+  if (selectedYear && !years.includes(selectedYear)) {
+    selectedYear = '';
+    select.value = '';
+  }
+}
+
+// Populate fee item dropdown from fee data
+function populateFeeItemDropdown() {
+  const select = document.getElementById('feeItemFilter');
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  const items = [...new Set(ENRICHED_FEES.map(f => f['收费项目名称']))].filter(i => i).sort();
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item;
+    opt.textContent = item;
+    select.appendChild(opt);
+  });
+  if (selectedFeeItem && !items.includes(selectedFeeItem)) {
+    selectedFeeItem = '';
+    select.value = '';
+  }
+}
+
+// Format money
+function formatMoney(val) {
+  if (val === null || val === undefined) return '\u00a50.00';
+  const num = parseFloat(val);
+  if (isNaN(num)) return '\u00a50.00';
+  return '\u00a5' + num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Get arrear CSS class
+function arrearClass(val) {
+  const num = parseFloat(val);
+  if (isNaN(num)) return 'arrear-zero';
+  if (num > 0.01) return 'arrear-positive';
+  if (num < -0.01) return 'arrear-negative';
+  return 'arrear-zero';
+}
+
+// Status badge
+function statusBadge(val) {
+  if (val === '在学') return '<span class="status-badge status-active">在学</span>';
+  if (val === '毕业') return '<span class="status-badge status-graduated">毕业</span>';
+  return '<span class="status-badge">' + (val || '-') + '</span>';
+}
+
+// XH display
+function xhDisplay(xh) {
+  if (xh && xh.startsWith('TEMP_')) return '<span class="xh-temp" title="原始学号为空，已分配临时标识">' + xh + ' \u26a0</span>';
+  return xh || '-';
+}
+
+// Cached filtered data
+let cachedFilteredData = null;
+let cachedFilterKey = '';
+
+// Filter data (cached)
+function getFilteredData() {
+  const filterKey = [searchKeyword, selectedCounselor, selectedCollege, selectedGrade, selectedClass, selectedYear, selectedFeeItem, arrearFilterOn].join('|');
+  if (cachedFilteredData && cachedFilterKey === filterKey) {
+    return cachedFilteredData;
+  }
+  cachedFilterKey = filterKey;
+
+  let feeData = ENRICHED_FEES;
+  let summaryData = STUDENT_SUMMARY;
+
+  // Search filter
+  if (searchKeyword) {
+    const kw = searchKeyword.toLowerCase();
+    feeData = feeData.filter(f =>
+      String(f['XH']).toLowerCase().includes(kw) ||
+      String(f['姓名']).toLowerCase().includes(kw)
+    );
+    summaryData = summaryData.filter(s =>
+      String(s['XH']).toLowerCase().includes(kw) ||
+      String(s['姓名']).toLowerCase().includes(kw)
+    );
+  }
+
+  // Counselor filter
+  if (selectedCounselor) {
+    const counselorClasses = getCounselorClasses(selectedCounselor);
+    const classSet = new Set(counselorClasses);
+    feeData = feeData.filter(f => classSet.has(f['班级名称']));
+    summaryData = summaryData.filter(s => classSet.has(s['班级名称']));
+  }
+
+  // College filter
+  if (selectedCollege) {
+    feeData = feeData.filter(f => f['部门名称'] === selectedCollege);
+    summaryData = summaryData.filter(s => s['部门名称'] === selectedCollege);
+  }
+
+  // Grade filter
+  if (selectedGrade) {
+    feeData = feeData.filter(f => extractGrade(f['班级名称']) === selectedGrade);
+    summaryData = summaryData.filter(s => extractGrade(s['班级名称']) === selectedGrade);
+  }
+
+  // Class filter
+  if (selectedClass) {
+    feeData = feeData.filter(f => f['班级名称'] === selectedClass);
+    summaryData = summaryData.filter(s => s['班级名称'] === selectedClass);
+  }
+
+  // Year filter (fee period)
+  if (selectedYear) {
+    feeData = feeData.filter(f => f['收费期间名称'] === selectedYear);
+    const yearXH = new Set(feeData.map(f => f['XH']));
+    summaryData = summaryData.filter(s => yearXH.has(s['XH']));
+  }
+
+  // Fee item filter
+  if (selectedFeeItem) {
+    feeData = feeData.filter(f => f['收费项目名称'] === selectedFeeItem);
+    const itemXH = new Set(feeData.map(f => f['XH']));
+    summaryData = summaryData.filter(s => itemXH.has(s['XH']));
+  }
+
+  // Arrear filter
+  if (arrearFilterOn) {
+    feeData = feeData.filter(f => f['欠费金额'] > 0.01);
+    summaryData = summaryData.filter(s => s['欠费合计'] > 0.01);
+  }
+
+  cachedFilteredData = { feeData, summaryData };
+  return cachedFilteredData;
+}
+
+// Update stats
+function updateStats() {
+  let filtered = getFilteredData();
+  const isSummary = currentTab === 'summary';
+
+  if (isSummary) {
+    const summaryData = filtered.summaryData;
+    document.getElementById('totalStudents').textContent = summaryData.length;
+    document.getElementById('totalRecords').textContent = STUDENT_SUMMARY.reduce((a,s)=>a+s['费用条数'],0);
+    const arrearStudents = summaryData.filter(s => s['欠费合计'] > 0.01);
+    document.getElementById('arrearStudents').textContent = arrearStudents.length;
+    document.getElementById('arrearTotal').textContent = formatMoney(arrearStudents.reduce((a,s)=>a+s['欠费合计'],0));
+  } else {
+    const feeData = filtered.feeData;
+    const uniqueStudents = new Set(feeData.map(f => f['XH']));
+    document.getElementById('totalStudents').textContent = uniqueStudents.size;
+    document.getElementById('totalRecords').textContent = feeData.length;
+    const arrearRecords = feeData.filter(f => f['欠费金额'] > 0.01);
+    const arrearXH = new Set(arrearRecords.map(f => f['XH']));
+    document.getElementById('arrearStudents').textContent = arrearXH.size;
+    document.getElementById('arrearTotal').textContent = formatMoney(arrearRecords.reduce((a,f)=>a+f['欠费金额'],0));
+  }
+}
+
+// Render pagination controls
+function renderPagination(total, page, size) {
+  const totalPages = Math.ceil(total / size);
+  if (totalPages <= 1) return '';
+  let html = '<div class="pagination">';
+  html += '<button onclick="goToPage(1)"' + (page <= 1 ? ' disabled' : '') + '>首页</button>';
+  html += '<button onclick="goToPage(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>';
+
+  // Show page numbers around current page
+  let startPage = Math.max(1, page - 2);
+  let endPage = Math.min(totalPages, page + 2);
+  for (let i = startPage; i <= endPage; i++) {
+    html += '<button onclick="goToPage(' + i + ')"' + (i === page ? ' class="active"' : '') + '>' + i + '</button>';
+  }
+  if (endPage < totalPages) {
+    html += '<span class="page-info">...</span>';
+    html += '<button onclick="goToPage(' + totalPages + ')">' + totalPages + '</button>';
+  }
+
+  html += '<button onclick="goToPage(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>下一页</button>';
+  html += '<button onclick="goToPage(' + totalPages + ')"' + (page >= totalPages ? ' disabled' : '') + '>末页</button>';
+  html += '<span class="page-info">第 ' + page + '/' + totalPages + ' 页 (共 ' + total + ' 条)</span>';
+  html += '</div>';
+  return html;
+}
+
+// Go to page
+function goToPage(page) {
+  currentPage = page;
+  render();
+  // Scroll to top of content
+  document.getElementById('contentArea').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Render detail table
+function renderDetail() {
+  const { feeData } = getFilteredData();
+
+  if (feeData.length === 0) {
+    return '<div class="empty-msg">未找到匹配的记录</div>';
+  }
+
+  // Pagination
+  const totalPages = Math.ceil(feeData.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, feeData.length);
+  const pageData = feeData.slice(start, end);
+
+  let html = renderPagination(feeData.length, currentPage, PAGE_SIZE);
+
+  html += '<div class="table-container"><table>';
+  html += '<thead><tr>';
+  html += '<th>学号</th><th>姓名</th><th>学院</th><th>班级</th><th>辅导员</th><th>收费项目</th><th>收费年度</th>';
+  html += '<th>应交金额</th><th>实交金额</th><th>减免金额</th><th>退费金额</th><th>欠费金额</th><th>状态</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const f of pageData) {
+    html += '<tr>';
+    html += '<td>' + xhDisplay(f['XH']) + '</td>';
+    html += '<td>' + (f['姓名'] || '-') + '</td>';
+    html += '<td>' + (f['部门名称'] || '-') + '</td>';
+    html += '<td>' + (f['班级名称'] || '-') + '</td>';
+    html += '<td>' + (getCounselor(f['班级名称']) || '-') + '</td>';
+    html += '<td>' + (f['收费项目名称'] || '-') + '</td>';
+    html += '<td>' + (f['收费期间名称'] || '-') + '</td>';
+    html += '<td class="money">' + formatMoney(f['应交金额']) + '</td>';
+    html += '<td class="money">' + formatMoney(f['实交金额']) + '</td>';
+    html += '<td class="money">' + formatMoney(f['减免金额']) + '</td>';
+    html += '<td class="money">' + formatMoney(f['退费金额']) + '</td>';
+    html += '<td class="money ' + arrearClass(f['欠费金额']) + '">' + formatMoney(f['欠费金额']) + '</td>';
+    html += '<td>' + statusBadge(f['学生状态名称']) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div>';
+  html += renderPagination(feeData.length, currentPage, PAGE_SIZE);
+  return html;
+}
+
+// Render summary cards
+function renderSummary() {
+  const { summaryData } = getFilteredData();
+
+  if (summaryData.length === 0) {
+    return '<div class="empty-msg">未找到匹配的学生</div>';
+  }
+
+  // Pagination
+  const totalPages = Math.ceil(summaryData.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, summaryData.length);
+  const pageData = summaryData.slice(start, end);
+
+  let html = renderPagination(summaryData.length, currentPage, PAGE_SIZE);
+
+  for (const s of pageData) {
+    html += '<div class="student-card">';
+    html += '<div class="name-row">';
+    html += '<span class="name">' + (s['姓名'] || '-') + '</span>';
+    html += xhDisplay(s['XH']);
+    html += statusBadge(s['学生状态名称']);
+    html += '</div>';
+    html += '<div class="info-grid">';
+    html += '<div class="info-item"><span class="info-label">学院：</span>' + (s['部门名称'] || '-') + '</div>';
+    html += '<div class="info-item"><span class="info-label">班级：</span>' + (s['班级名称'] || '-') + '</div>';
+    html += '<div class="info-item"><span class="info-label">辅导员：</span>' + (getCounselor(s['班级名称']) || '-') + '</div>';
+    html += '<div class="info-item"><span class="info-label">专业：</span>' + (s['专业名称'] || '-') + '</div>';
+    html += '<div class="info-item"><span class="info-label">费用条数：</span>' + s['费用条数'] + '条</div>';
+    html += '</div>';
+    html += '<div class="summary-row">';
+    html += '<div class="summary-item"><div class="summary-label">应交合计</div><div class="summary-value">' + formatMoney(s['应交合计']) + '</div></div>';
+    html += '<div class="summary-item"><div class="summary-label">实交合计</div><div class="summary-value">' + formatMoney(s['实交合计']) + '</div></div>';
+    html += '<div class="summary-item"><div class="summary-label">减免合计</div><div class="summary-value">' + formatMoney(s['减免合计']) + '</div></div>';
+    html += '<div class="summary-item"><div class="summary-label">退费合计</div><div class="summary-value">' + formatMoney(s['退费合计']) + '</div></div>';
+    html += '<div class="summary-item"><div class="summary-label">欠费合计</div><div class="summary-value ' + arrearClass(s['欠费合计']) + '">' + formatMoney(s['欠费合计']) + '</div></div>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  html += renderPagination(summaryData.length, currentPage, PAGE_SIZE);
+  return html;
+}
+
+// Render
+function render() {
+  const content = document.getElementById('contentArea');
+  if (currentTab === 'detail') {
+    content.innerHTML = renderDetail();
+  } else {
+    content.innerHTML = renderSummary();
+  }
+  updateStats();
+}
+
+// Switch tab
+function switchTab(tab) {
+  currentTab = tab;
+  currentPage = 1;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  render();
+}
+
+// Toggle arrear filter
+function toggleArrearFilter() {
+  arrearFilterOn = !arrearFilterOn;
+  document.getElementById('arrearFilter').classList.toggle('active', arrearFilterOn);
+  currentPage = 1;
+  render();
+}
+
+// Search with debounce
+let searchTimer = null;
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() {
+    searchKeyword = e.target.value.trim();
+    currentPage = 1;
+    render();
+  }, 300);
+});
+
+// Counselor filter
+document.getElementById('counselorFilter').addEventListener('change', function(e) {
+  selectedCounselor = e.target.value;
+  currentPage = 1;
+  render();
+});
+
+// College filter event listener
+document.getElementById('collegeFilter').addEventListener('change', function(e) {
+  selectedCollege = e.target.value;
+  populateCounselorDropdown();
+  populateGradeDropdown();
+  populateClassDropdown();
+  currentPage = 1;
+  render();
+});
+
+// Grade filter
+document.getElementById('gradeFilter').addEventListener('change', function(e) {
+  selectedGrade = e.target.value;
+  populateClassDropdown();
+  currentPage = 1;
+  render();
+});
+
+// Class filter event listener
+document.getElementById('classFilter').addEventListener('change', function(e) {
+  selectedClass = e.target.value;
+  currentPage = 1;
+  render();
+});
+
+// Year filter event listener
+document.getElementById('yearFilter').addEventListener('change', function(e) {
+  selectedYear = e.target.value;
+  currentPage = 1;
+  render();
+});
+
+// Fee item filter event listener
+document.getElementById('feeItemFilter').addEventListener('change', function(e) {
+  selectedFeeItem = e.target.value;
+  currentPage = 1;
+  render();
+});
+
+// Populate dropdowns and initial render
+populateCounselorDropdown();
+populateCollegeDropdown();
+populateGradeDropdown();
+populateClassDropdown();
+populateYearDropdown();
+populateFeeItemDropdown();
+render();
+</script>
+
+</body>
+</html>
